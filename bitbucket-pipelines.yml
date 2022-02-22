@@ -1,0 +1,34 @@
+options:
+   docker: true
+
+definitions:
+   steps:
+     - step: &build-image-robis-and-push
+         name: Build Docker image for running bq queries and Push to GCP registry
+         image: google/cloud-sdk:alpine
+         size: 2x
+         script:
+           - export IMAGE_NAME=gcr.io/wx-bq-poc/robis-automation:latest
+           - docker build -f src/Dockerfile src -t $IMAGE_NAME
+           - echo $GCLOUD_API_SAFARI_PROD | base64 -d > ./gcloud-api-key.json
+           - gcloud auth activate-service-account safari-prod@gcp-wow-rwds-ai-safari-prod.iam.gserviceaccount.com --key-file=./gcloud-api-key.json
+           - gcloud auth configure-docker
+           - docker push $IMAGE_NAME
+           
+     - step: &build-image-sem-and-push
+         name: Build Docker image for running bq queries and Push to GCP registry
+         image: google/cloud-sdk:alpine
+         size: 2x
+         script:
+           - export IMAGE_NAME=gcr.io/wx-bq-poc/sem-automation:latest
+           - docker build -f src/Dockerfile src -t $IMAGE_NAME
+           - echo $GCLOUD_API_SAFARI_PROD | base64 -d > ./gcloud-api-key.json
+           - gcloud auth activate-service-account safari-prod@gcp-wow-rwds-ai-safari-prod.iam.gserviceaccount.com --key-file=./gcloud-api-key.json
+           - gcloud auth configure-docker
+           - docker push $IMAGE_NAME
+pipelines:
+   branches:
+     dev:
+       - step: *build-image-robis-and-push
+       - step: *build-image-sem-and-push
+
